@@ -253,13 +253,33 @@ export const GlyphEditorModal: React.FC<GlyphEditorModalProps> = ({
                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                   Carácter asignado:
                 </label>
-                <input
-                  type="text"
-                  maxLength={2}
-                  value={targetChar}
-                  onChange={(e) => setTargetChar(e.target.value.trim().slice(-1) || targetChar)}
-                  className="w-16 h-12 text-center text-2xl font-bold rounded-xl border-2 border-gray-300 text-gray-800 focus:border-blue-500 focus:outline-hidden uppercase"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    maxLength={2}
+                    value={targetChar}
+                    onChange={(e) => setTargetChar(e.target.value.length > 0 ? e.target.value.slice(-1) : targetChar)}
+                    className="w-16 h-12 text-center text-2xl font-bold rounded-xl border-2 border-gray-300 text-gray-800 focus:border-blue-500 focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const isUpper = targetChar === targetChar.toUpperCase() && targetChar !== targetChar.toLowerCase();
+                      setTargetChar(isUpper ? targetChar.toLowerCase() : targetChar.toUpperCase());
+                    }}
+                    title="Alternar mayúscula / minúscula"
+                    className="px-3 py-2 text-xs font-bold rounded-xl border border-gray-200 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  >
+                    Alternar Aa
+                  </button>
+                  <span className="text-xs font-semibold text-gray-500">
+                    {targetChar === targetChar.toUpperCase() && targetChar !== targetChar.toLowerCase()
+                      ? '(Mayúscula)'
+                      : targetChar === targetChar.toLowerCase() && targetChar !== targetChar.toUpperCase()
+                      ? '(Minúscula)'
+                      : ''}
+                  </span>
+                </div>
               </div>
 
               {/* Brush Tools */}

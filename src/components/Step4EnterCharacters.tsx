@@ -14,7 +14,9 @@ import {
   ArrowRight,
   Info,
   Check,
-  AlertCircle
+  AlertCircle,
+  CaseSensitive,
+  Type
 } from 'lucide-react';
 
 interface Step4EnterCharactersProps {
@@ -40,10 +42,36 @@ export const Step4EnterCharacters: React.FC<Step4EnterCharactersProps> = ({
   const visibleChars = charsList.filter((c) => showSpecks || !c.isSpeck);
 
   const handleCharChange = (id: string, newChar: string) => {
-    // Take the first grapheme or allow 1 character (or accented letters)
-    const val = newChar.trim().slice(-1) || '';
+    // Preserve exact case: take the last typed character or empty
+    const val = newChar.length > 0 ? newChar.slice(-1) : '';
     setCharsList((prev) =>
       prev.map((c) => (c.id === id ? { ...c, char: val } : c))
+    );
+  };
+
+  // Toggle case between uppercase and lowercase for a single character
+  const handleToggleCase = (id: string) => {
+    setCharsList((prev) =>
+      prev.map((c) => {
+        if (c.id !== id || !c.char) return c;
+        const isUpper = c.char === c.char.toUpperCase() && c.char !== c.char.toLowerCase();
+        const toggled = isUpper ? c.char.toLowerCase() : c.char.toUpperCase();
+        return { ...c, char: toggled };
+      })
+    );
+  };
+
+  // Convert all assigned letters to UPPERCASE
+  const handleSetAllUppercase = () => {
+    setCharsList((prev) =>
+      prev.map((c) => ({ ...c, char: c.char ? c.char.toUpperCase() : '' }))
+    );
+  };
+
+  // Convert all assigned letters to lowercase
+  const handleSetAllLowercase = () => {
+    setCharsList((prev) =>
+      prev.map((c) => ({ ...c, char: c.char ? c.char.toLowerCase() : '' }))
     );
   };
 
@@ -97,10 +125,10 @@ export const Step4EnterCharacters: React.FC<Step4EnterCharactersProps> = ({
     );
   };
 
-  // Bulk distribute text (e.g. typing "Paloma" assigns P, a, l, o, m, a to the non-speck boxes)
+  // Bulk distribute text (e.g. typing "Paloma" assigns P, a, l, o, m, a respecting exact case)
   const handleDistributeBulkText = () => {
-    if (!bulkTextInput.trim()) return;
-    const letters = Array.from(bulkTextInput.trim());
+    if (!bulkTextInput) return;
+    const letters = Array.from(bulkTextInput);
     let letterIdx = 0;
 
     setCharsList((prev) =>
@@ -134,27 +162,49 @@ export const Step4EnterCharacters: React.FC<Step4EnterCharactersProps> = ({
             Ingresar Caracteres (Enter Characters)
           </h1>
           <p className="mt-1 text-sm text-gray-600">
-            Revisa cada letra recortada y escribe el carácter correspondiente en el recuadro inferior.
+            Escribe la letra correspondiente distinguiendo entre <strong>MAYÚSCULAS</strong> y <strong>minúsculas</strong> según corresponda.
           </p>
         </div>
 
-        {/* Quick bulk assignment helper */}
-        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 p-1.5 rounded-2xl">
-          <input
-            type="text"
-            value={bulkTextInput}
-            onChange={(e) => setBulkTextInput(e.target.value)}
-            placeholder="Ej: Paloma"
-            className="px-3 py-1.5 text-xs font-medium rounded-xl border border-gray-200 bg-white text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="button"
-            onClick={handleDistributeBulkText}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-2xs"
-          >
-            <span>Asignar palabra</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
+        {/* Quick bulk assignment helper & Case conversion tools */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Quick case helpers */}
+          <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs font-semibold">
+            <button
+              type="button"
+              onClick={handleSetAllUppercase}
+              title="Convertir todas las letras escritas a MAYÚSCULAS"
+              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-gray-50 text-gray-800 shadow-2xs transition-colors"
+            >
+              MAYÚS (A-Z)
+            </button>
+            <button
+              type="button"
+              onClick={handleSetAllLowercase}
+              title="Convertir todas las letras escritas a minúsculas"
+              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-gray-50 text-gray-800 shadow-2xs transition-colors"
+            >
+              minús (a-z)
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 p-1.5 rounded-2xl">
+            <input
+              type="text"
+              value={bulkTextInput}
+              onChange={(e) => setBulkTextInput(e.target.value)}
+              placeholder="Ej: Paloma"
+              className="px-3 py-1.5 text-xs font-medium rounded-xl border border-gray-200 bg-white text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              onClick={handleDistributeBulkText}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-2xs"
+            >
+              <span>Asignar</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -162,18 +212,18 @@ export const Step4EnterCharacters: React.FC<Step4EnterCharactersProps> = ({
       <div className="mt-6 bg-blue-50/80 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-blue-900">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-            <Info className="w-5 h-5" />
+            <CaseSensitive className="w-5 h-5 text-blue-700" />
           </div>
           <div className="text-xs sm:text-sm">
             <p className="font-semibold">
               {specksCount > 0 ? (
                 <>Ocultamos {specksCount} fragmento(s) o motas pequeñas que probablemente no sean letras.</>
               ) : (
-                <>Todas las letras identificadas están listas.</>
+                <>Diferenciación exacta de mayúsculas y minúsculas activada.</>
               )}
             </p>
             <p className="text-blue-700/80 text-xs mt-0.5">
-              Si una letra quedó dividida en varias partes (ej. el punto de la «i» o tilde «ñ»), arrástralas una sobre otra o usa el botón unir.
+              Puedes escribir en <strong>minúsculas (ej: a, b, c)</strong> o en <strong>MAYÚSCULAS (ej: A, B, C)</strong>. Cada una irá a su ranura correspondiente en la tipografía.
             </p>
           </div>
         </div>
@@ -209,7 +259,11 @@ export const Step4EnterCharacters: React.FC<Step4EnterCharactersProps> = ({
         ) : (
           <div className="flex flex-wrap items-end gap-4 sm:gap-6 justify-center sm:justify-start">
             {visibleChars.map((item, index) => {
-              const isAssigned = item.char.trim() !== '';
+              const charVal = item.char || '';
+              const isAssigned = charVal.trim() !== '';
+              const isLetter = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]$/.test(charVal);
+              const isUpper = isLetter && charVal === charVal.toUpperCase();
+              const isLower = isLetter && charVal === charVal.toLowerCase();
 
               return (
                 <div
@@ -265,23 +319,65 @@ export const Step4EnterCharacters: React.FC<Step4EnterCharactersProps> = ({
                     />
                   </div>
 
-                  {/* Character Input Box (Matching WhatFontIs Image 5) */}
+                  {/* Character Input Box with Case Switcher */}
                   <div className="mt-3 w-full flex flex-col items-center">
-                    <input
-                      type="text"
-                      maxLength={2}
-                      value={item.char}
-                      onChange={(e) => handleCharChange(item.id, e.target.value)}
-                      placeholder="?"
-                      className={`w-14 h-12 text-center text-xl font-bold rounded-xl border-2 transition-all uppercase focus:outline-hidden ${
-                        isAssigned
-                          ? 'border-blue-600 bg-blue-50/50 text-blue-700 shadow-inner'
-                          : 'border-gray-300 bg-white text-gray-900 focus:border-blue-500'
-                      }`}
-                    />
-                    <span className="text-[10px] text-gray-400 mt-1 font-mono">
-                      {item.bbox.width}x{item.bbox.height}px
-                    </span>
+                    <div className="relative flex items-center justify-center gap-1">
+                      <input
+                        type="text"
+                        maxLength={2}
+                        value={item.char}
+                        onChange={(e) => handleCharChange(item.id, e.target.value)}
+                        placeholder="?"
+                        className={`w-14 h-12 text-center text-2xl font-bold rounded-xl border-2 transition-all focus:outline-hidden ${
+                          isAssigned
+                            ? 'border-blue-600 bg-blue-50/50 text-blue-700 shadow-inner'
+                            : 'border-gray-300 bg-white text-gray-900 focus:border-blue-500'
+                        }`}
+                      />
+
+                      {/* Quick Aa Toggle Button */}
+                      {isAssigned && isLetter && (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCase(item.id)}
+                          title={`Alternar a ${isUpper ? 'minúscula' : 'MAYÚSCULA'}`}
+                          className="w-7 h-7 flex items-center justify-center text-[10px] font-bold rounded-lg border border-gray-200 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-gray-600 transition-colors shadow-2xs"
+                        >
+                          Aa
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Case Indicator Badge */}
+                    <div className="mt-1.5 flex items-center gap-1">
+                      {isAssigned ? (
+                        isUpper ? (
+                          <span
+                            onClick={() => handleToggleCase(item.id)}
+                            className="cursor-pointer text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/60"
+                            title="Haz clic para cambiar a minúscula"
+                          >
+                            MAYÚSCULA
+                          </span>
+                        ) : isLower ? (
+                          <span
+                            onClick={() => handleToggleCase(item.id)}
+                            className="cursor-pointer text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60"
+                            title="Haz clic para cambiar a MAYÚSCULA"
+                          >
+                            minúscula
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-sm">
+                            Símbolo
+                          </span>
+                        )
+                      ) : (
+                        <span className="text-[10px] text-gray-400 font-mono">
+                          {item.bbox.width}x{item.bbox.height}px
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

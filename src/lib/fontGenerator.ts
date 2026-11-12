@@ -100,8 +100,15 @@ export async function buildOpenTypeFont(project: FontProject): Promise<Font> {
     const glyphWidthUnits = Math.round(canvas.width * scale);
     const advanceWidth = Math.max(200, glyphWidthUnits + leftBearingUnits + rightBearingUnits);
 
-    const glyphName = char.length === 1 && char.match(/[a-zA-Z0-9]/)
-      ? `glyph_${char}`
+    const isUpper = char >= 'A' && char <= 'Z';
+    const isLower = char >= 'a' && char <= 'z';
+    const isDigit = char >= '0' && char <= '9';
+    const glyphName = isUpper
+      ? `${char}_cap`
+      : isLower
+      ? `${char}_low`
+      : isDigit
+      ? `digit_${char}`
       : `uni${charCode.toString(16).padStart(4, '0')}`;
 
     const glyph = new Glyph({
